@@ -31,6 +31,7 @@ agent_ci/
                  faithfulness, completeness, safety, hallucination, tone)
   rubric.py    — backward-compatible scoring entry point
   metric_weights.json — configurable metric weights and pass threshold
+  regression_config.json — overall/metric regression thresholds
   diff.py      — runs baseline vs candidate and classifies every test as
                  REGRESSION / IMPROVEMENT / UNCHANGED
 run_demo.py    — runs the whole thing end to end, prints the report,
