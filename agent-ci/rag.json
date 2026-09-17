@@ -1,0 +1,8 @@
+{
+  "document_name": "loomly_support_policy_v3",
+  "collection_name": "company_policy",
+  "persist_directory": "chroma",
+  "top_k": 3,
+  "chunk_size": 300,
+  "chunk_overlap": 0
+}
