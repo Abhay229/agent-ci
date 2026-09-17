@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from agent_ci.conversation import get_test_type
 from agent_ci.evaluation.engine import get_engine
 from agent_ci.evaluation.hard_rules import HardRuleEvaluator
 
@@ -35,10 +36,16 @@ def score_response(
     test_case: dict,
     weights: tuple[float, float] | None = None,
     retrieved_context: list[dict] | None = None,
+    conversation_transcript: list[dict[str, str]] | None = None,
+    tool_calls: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Evaluate a response and return per-test metrics plus final score."""
     _ = weights  # legacy tuple ignored; weights come from metric_weights.json
-    evaluation_context = None
+    evaluation_context: dict = {"test_type": get_test_type(test_case)}
+    if conversation_transcript:
+        evaluation_context["conversation_transcript"] = conversation_transcript
     if retrieved_context:
-        evaluation_context = {"retrieved_context": retrieved_context}
+        evaluation_context["retrieved_context"] = retrieved_context
+    if tool_calls is not None:
+        evaluation_context["tool_calls"] = tool_calls
     return get_engine().evaluate(response, test_case, evaluation_context)

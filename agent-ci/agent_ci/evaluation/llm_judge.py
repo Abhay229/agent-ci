@@ -7,6 +7,7 @@ import os
 import re
 from typing import Any
 
+from agent_ci.conversation import format_conversation_for_judge, get_test_type
 from agent_ci.dataset import COMPANY_POLICY
 from agent_ci.evaluation.mock_heuristics import metric_reason, mock_base_llm_score
 from agent_ci.evaluation.types import EvaluationResult
@@ -170,6 +171,25 @@ def parse_judge_response(content: str, metric: str) -> EvaluationResult:
     return _normalize_judge_payload(payload, metric)
 
 
+def _format_transcript(transcript: list[dict[str, str]] | str) -> str:
+    if isinstance(transcript, str):
+        return transcript
+    lines = []
+    for turn in transcript:
+        label = "Customer" if turn.get("role") == "user" else "Agent"
+        lines.append(f"{label}: {turn.get('content', '')}")
+    return "\n".join(lines)
+
+
+def _customer_context_block(test_case: dict, response: str, context: dict | None) -> str:
+    if get_test_type(test_case) == "multi_turn":
+        transcript = (context or {}).get("conversation_transcript")
+        if transcript:
+            return f"Full conversation:\n{_format_transcript(transcript)}"
+        return f"Full conversation:\n{format_conversation_for_judge(test_case, final_response=response)}"
+    return f"Customer message: {test_case.get('user_message', '')}"
+
+
 def _policy_context_block(metric: str, context: dict | None) -> str:
     retrieved_text = _format_retrieved_context(context)
     if metric == "faithfulness" and retrieved_text:
@@ -196,11 +216,12 @@ def _live_metric_result(
             " Compare the answer against the RETRIEVED policy context the agent was given, "
             "not the full policy document."
         )
+    customer_block = _customer_context_block(test_case, response, context)
     prompt = (
         f"You are evaluating a customer support agent response.\n\n"
         f"{_policy_context_block(metric, context)}\n\n"
-        f"Customer message: {test_case['user_message']}\n\n"
-        f"Agent reply: {response}\n\n"
+        f"{customer_block}\n\n"
+        f"Final agent reply (evaluate this in full conversation context):\n{response}\n\n"
         f"Test rubric: {test_case.get('judge_rubric', '')}\n\n"
         f"{criterion}\n\n"
         f"Respond with ONLY valid JSON in this exact shape:\n"

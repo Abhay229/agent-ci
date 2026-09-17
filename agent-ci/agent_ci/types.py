@@ -17,6 +17,7 @@ class AgentResponse:
     token_usage: dict[str, int] | None = None
     retrieved_context: list[dict[str, Any]] | None = None
     tool_calls: list[dict[str, Any]] | None = None
+    conversation_transcript: list[dict[str, str]] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:

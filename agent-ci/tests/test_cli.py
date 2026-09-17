@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from agent_ci.cli import cmd_check, cmd_evaluate, main, print_check_summary
+from agent_ci.dataset import TEST_CASES
 from agent_ci.gate import evaluate_gate
 from agent_ci.regression.types import VERDICT_IMPROVEMENT, VERDICT_REGRESSION
 
@@ -84,7 +85,7 @@ class TestCLI(unittest.TestCase):
             data = json.loads(output.read_text(encoding="utf-8"))
             self.assertIn("summary", data)
             self.assertIn("rows", data)
-            self.assertEqual(data["summary"]["n_tests"], 13)
+            self.assertEqual(data["summary"]["n_tests"], len(TEST_CASES))
 
     def test_check_command_exit_code_on_regression(self):
         with tempfile.TemporaryDirectory() as tmp:

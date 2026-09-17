@@ -36,5 +36,6 @@ class BaseProvider(ABC):
         model: str,
         temperature: float = 0.2,
         max_tokens: int = 200,
+        messages: list[dict[str, str]] | None = None,
     ) -> ProviderResult:
         ...

@@ -16,6 +16,13 @@ RED_FLAG_PHRASES = [
     "starts at around $",
     "out of the box",
     "not entirely sure about audit log",
+    "approved your full refund",
+    "call us at",
+    "1-800",
+    "confirmation email is on its way",
+    "refund has been processed",
+    "sso is active",
+    "audit logs are included on pro",
 ]
 
 POSITIVE_SIGNALS = [

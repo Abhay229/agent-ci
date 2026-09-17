@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from agent_ci.dataset import TEST_CASES
 from dashboard.data_loader import (
     filter_rows_by_verdict,
     get_retrieved_context,
@@ -29,7 +30,7 @@ class TestDashboardDataLoader(unittest.TestCase):
         report = load_report(self.report_path)
         self.assertIn("summary", report)
         self.assertIn("rows", report)
-        self.assertEqual(get_summary(report)["n_tests"], 13)
+        self.assertEqual(get_summary(report)["n_tests"], len(TEST_CASES))
 
     def test_metric_comparison_rows(self):
         report = load_report(self.report_path)

@@ -30,6 +30,7 @@ class OpenRouterProvider(BaseProvider):
         model: str,
         temperature: float = 0.2,
         max_tokens: int = 200,
+        messages: list[dict[str, str]] | None = None,
     ) -> ProviderResult:
         if not self._api_key:
             raise RuntimeError("OPENROUTER_API_KEY is required for live mode")
@@ -38,12 +39,14 @@ class OpenRouterProvider(BaseProvider):
 
         client = OpenAI(base_url=self._base_url, api_key=self._api_key)
         started = time.perf_counter()
+        chat_messages = [{"role": "system", "content": system_prompt}]
+        if messages:
+            chat_messages.extend(messages)
+        else:
+            chat_messages.append({"role": "user", "content": user_message})
         resp = client.chat.completions.create(
             model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
+            messages=chat_messages,
             temperature=temperature,
             max_tokens=max_tokens,
         )

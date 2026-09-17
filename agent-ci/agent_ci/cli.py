@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from agent_ci.analysis.config import is_root_cause_enabled
 from agent_ci.analysis.root_cause import enrich_report_with_root_cause
 from agent_ci.analysis.types import AI_ANALYSIS_DISCLAIMER
 from agent_ci.diff import build_diff_report
@@ -15,6 +16,7 @@ from agent_ci.history.compare import print_history_compare, print_history_list
 from agent_ci.history.record import build_evaluation_record
 from agent_ci.history.store import get_history_store
 from agent_ci.regression.types import VERDICT_REGRESSION
+from agent_ci.testgen.config import is_test_generation_enabled
 from agent_ci.testgen.generator import generate_tests_for_report
 from agent_ci.testgen.store import get_generated_test_store
 from agent_ci.testgen.types import AI_TEST_DISCLAIMER
@@ -104,6 +106,18 @@ def _write_json_report(payload: dict, output_path: Path) -> None:
     print(f"\nSaved {output_path}")
 
 
+def _resolve_root_cause_flag(cli_flag: bool) -> bool:
+    if cli_flag:
+        return True
+    return is_root_cause_enabled()
+
+
+def _resolve_generate_tests_flag(cli_flag: bool) -> bool:
+    if cli_flag:
+        return True
+    return is_test_generation_enabled()
+
+
 def _maybe_generate_tests(report: dict, enabled: bool, store_path: str | None) -> dict:
     if not enabled:
         return report
@@ -155,10 +169,10 @@ def _maybe_save_history(
 def cmd_evaluate(args: argparse.Namespace) -> int:
     """Run benchmark evaluation and produce reports."""
     report = build_diff_report()
-    report = _maybe_analyze_root_cause(report, getattr(args, "root_cause", False))
+    report = _maybe_analyze_root_cause(report, _resolve_root_cause_flag(getattr(args, "root_cause", False)))
     report = _maybe_generate_tests(
         report,
-        getattr(args, "generate_tests", False),
+        _resolve_generate_tests_flag(getattr(args, "generate_tests", False)),
         getattr(args, "generated_tests_path", None),
     )
     print_evaluate_summary(report)
@@ -178,10 +192,10 @@ def cmd_evaluate(args: argparse.Namespace) -> int:
 def cmd_check(args: argparse.Namespace) -> int:
     """Run benchmark, detect regressions, and enforce the quality gate."""
     report = build_diff_report()
-    report = _maybe_analyze_root_cause(report, getattr(args, "root_cause", False))
+    report = _maybe_analyze_root_cause(report, _resolve_root_cause_flag(getattr(args, "root_cause", False)))
     report = _maybe_generate_tests(
         report,
-        getattr(args, "generate_tests", False),
+        _resolve_generate_tests_flag(getattr(args, "generate_tests", False)),
         getattr(args, "generated_tests_path", None),
     )
     gate = evaluate_gate(report, max_regressions=args.max_regressions)

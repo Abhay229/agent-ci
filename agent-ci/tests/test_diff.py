@@ -47,6 +47,15 @@ class TestDiffReport(unittest.TestCase):
             row["delta"] <= -threshold or len(row["metric_regressions"]) > 0
         )
 
+    def test_report_includes_new_test_types(self):
+        report = build_diff_report()
+        test_types = {row.get("test_type") for row in report["rows"]}
+        self.assertIn("single_turn", test_types)
+        self.assertIn("multi_turn", test_types)
+        categories = {row["category"] for row in report["rows"]}
+        self.assertIn("adversarial", categories)
+        self.assertIn("tools", categories)
+
     def test_each_row_has_regression_fields(self):
         report = build_diff_report()
         for row in report["rows"]:
