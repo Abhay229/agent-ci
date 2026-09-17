@@ -1,0 +1,13 @@
+{
+  "overall_threshold": 0.1,
+  "metric_threshold": 0.1,
+  "monitored_metrics": [
+    "correctness",
+    "relevance",
+    "faithfulness",
+    "completeness",
+    "safety",
+    "hallucination",
+    "tone"
+  ]
+}
