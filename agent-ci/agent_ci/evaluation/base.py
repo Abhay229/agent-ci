@@ -16,13 +16,23 @@ class BaseEvaluator(ABC):
     metric: str
 
     @abstractmethod
-    def evaluate(self, response: str, test_case: dict) -> EvaluationResult:
+    def evaluate(
+        self,
+        response: str,
+        test_case: dict,
+        context: dict | None = None,
+    ) -> EvaluationResult:
         """Evaluate one agent response against one test case."""
 
-    def safe_evaluate(self, response: str, test_case: dict) -> EvaluationResult:
+    def safe_evaluate(
+        self,
+        response: str,
+        test_case: dict,
+        context: dict | None = None,
+    ) -> EvaluationResult:
         """Run evaluate() and return a failure result instead of raising."""
         try:
-            return self.evaluate(response, test_case)
+            return self.evaluate(response, test_case, context)
         except Exception as exc:
             logger.exception("Evaluator %s failed", self.metric)
             return EvaluationResult(

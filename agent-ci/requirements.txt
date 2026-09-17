@@ -1,2 +1,5 @@
 # Required only for live mode (AGENT_CI_LIVE=1)
 openai>=1.0.0
+
+# RAG vector store (local embeddings, no API key required)
+chromadb>=0.4.0

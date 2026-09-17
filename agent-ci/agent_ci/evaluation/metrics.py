@@ -11,8 +11,13 @@ class _LLMMetricEvaluator(BaseEvaluator):
     def __init__(self, metric: str):
         self.metric = metric
 
-    def evaluate(self, response: str, test_case: dict) -> EvaluationResult:
-        return evaluate_llm_metric(self.metric, response, test_case)
+    def evaluate(
+        self,
+        response: str,
+        test_case: dict,
+        context: dict | None = None,
+    ) -> EvaluationResult:
+        return evaluate_llm_metric(self.metric, response, test_case, context=context)
 
 
 class CorrectnessEvaluator(_LLMMetricEvaluator):

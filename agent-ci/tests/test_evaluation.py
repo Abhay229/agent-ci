@@ -42,7 +42,7 @@ class TestEvaluationEngine(unittest.TestCase):
 
     def test_failed_evaluator_does_not_crash_run(self):
         class BrokenEvaluator(CorrectnessEvaluator):
-            def evaluate(self, response: str, test_case: dict) -> EvaluationResult:
+            def evaluate(self, response: str, test_case: dict, context=None) -> EvaluationResult:
                 raise RuntimeError("boom")
 
         engine = EvaluationEngine(

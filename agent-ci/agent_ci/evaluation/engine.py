@@ -45,9 +45,15 @@ class EvaluationEngine:
         self.weights = weights or {e.metric: 0.0 for e in self.evaluators}
         self.pass_threshold = pass_threshold
 
-    def evaluate(self, response: str, test_case: dict) -> dict[str, Any]:
+    def evaluate(
+        self,
+        response: str,
+        test_case: dict,
+        evaluation_context: dict | None = None,
+    ) -> dict[str, Any]:
         results: list[EvaluationResult] = [
-            evaluator.safe_evaluate(response, test_case) for evaluator in self.evaluators
+            evaluator.safe_evaluate(response, test_case, evaluation_context)
+            for evaluator in self.evaluators
         ]
         metrics = {result.metric: result.to_dict() for result in results}
         final_score = self._weighted_score(results)

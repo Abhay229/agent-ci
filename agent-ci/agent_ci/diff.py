@@ -21,7 +21,11 @@ def run_agent_suite(agent: BaseAgent) -> list[dict]:
     results = []
     for tc in TEST_CASES:
         agent_response = agent.run(tc)
-        scored = score_response(agent_response.answer, tc)
+        scored = score_response(
+            agent_response.answer,
+            tc,
+            retrieved_context=agent_response.retrieved_context,
+        )
         results.append({
             "id": tc["id"],
             "category": tc["category"],

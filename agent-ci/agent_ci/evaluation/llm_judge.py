@@ -91,7 +91,61 @@ def _normalize_judge_payload(payload: dict[str, Any], metric: str) -> Evaluation
     )
 
 
-def _mock_metric_result(metric: str, response: str, test_case: dict) -> EvaluationResult:
+def _format_retrieved_context(context: dict | None) -> str:
+    if not context:
+        return ""
+    chunks = context.get("retrieved_context") or []
+    if not chunks:
+        return ""
+    parts = []
+    for chunk in chunks:
+        section = chunk.get("section", "Unknown")
+        chunk_id = chunk.get("chunk_id", "unknown")
+        document = chunk.get("document", "unknown")
+        text = chunk.get("text", "")
+        parts.append(f"[{section}] (source: {document}, chunk: {chunk_id})\n{text}")
+    return "\n\n".join(parts)
+
+
+def _mock_faithfulness_result(
+    response: str,
+    test_case: dict,
+    context: dict | None,
+) -> EvaluationResult:
+    score, red_flag = mock_base_llm_score(response, test_case)
+    retrieved = (context or {}).get("retrieved_context") or []
+    reason = metric_reason("faithfulness", response, test_case, score, red_flag)
+
+    if retrieved and not red_flag:
+        sections = ", ".join(chunk.get("section", "Unknown") for chunk in retrieved[:3])
+        reason = (
+            f"Response appears grounded in retrieved policy sections ({sections})."
+        )
+    elif retrieved and red_flag:
+        sections = ", ".join(chunk.get("section", "Unknown") for chunk in retrieved[:3])
+        reason = (
+            f"Response conflicts with retrieved policy context ({sections}) or adds unsupported claims."
+        )
+        score = min(score, 0.3)
+
+    return EvaluationResult(
+        metric="faithfulness",
+        score=round(score, 3),
+        passed=score >= 0.7,
+        reason=reason,
+        details={"retrieved_sections": [c.get("section") for c in retrieved]},
+    )
+
+
+def _mock_metric_result(
+    metric: str,
+    response: str,
+    test_case: dict,
+    context: dict | None = None,
+) -> EvaluationResult:
+    if metric == "faithfulness":
+        return _mock_faithfulness_result(response, test_case, context)
+
     score, red_flag = mock_base_llm_score(response, test_case)
     return EvaluationResult(
         metric=metric,
@@ -116,7 +170,20 @@ def parse_judge_response(content: str, metric: str) -> EvaluationResult:
     return _normalize_judge_payload(payload, metric)
 
 
-def _live_metric_result(metric: str, response: str, test_case: dict, model: str) -> EvaluationResult:
+def _policy_context_block(metric: str, context: dict | None) -> str:
+    retrieved_text = _format_retrieved_context(context)
+    if metric == "faithfulness" and retrieved_text:
+        return f"Retrieved policy context used by the agent:\n{retrieved_text}"
+    return f"Company policy:\n{COMPANY_POLICY.strip()}"
+
+
+def _live_metric_result(
+    metric: str,
+    response: str,
+    test_case: dict,
+    model: str,
+    context: dict | None = None,
+) -> EvaluationResult:
     from openai import OpenAI
 
     client = OpenAI(
@@ -124,9 +191,14 @@ def _live_metric_result(metric: str, response: str, test_case: dict, model: str)
         api_key=os.environ["OPENROUTER_API_KEY"],
     )
     criterion = METRIC_PROMPTS[metric]
+    if metric == "faithfulness" and context and context.get("retrieved_context"):
+        criterion += (
+            " Compare the answer against the RETRIEVED policy context the agent was given, "
+            "not the full policy document."
+        )
     prompt = (
         f"You are evaluating a customer support agent response.\n\n"
-        f"Company policy:\n{COMPANY_POLICY.strip()}\n\n"
+        f"{_policy_context_block(metric, context)}\n\n"
         f"Customer message: {test_case['user_message']}\n\n"
         f"Agent reply: {response}\n\n"
         f"Test rubric: {test_case.get('judge_rubric', '')}\n\n"
@@ -145,7 +217,13 @@ def _live_metric_result(metric: str, response: str, test_case: dict, model: str)
     return parse_judge_response(content, metric)
 
 
-def evaluate_llm_metric(metric: str, response: str, test_case: dict, model: str = DEFAULT_JUDGE_MODEL) -> EvaluationResult:
+def evaluate_llm_metric(
+    metric: str,
+    response: str,
+    test_case: dict,
+    model: str = DEFAULT_JUDGE_MODEL,
+    context: dict | None = None,
+) -> EvaluationResult:
     if os.environ.get("AGENT_CI_LIVE") == "1":
-        return _live_metric_result(metric, response, test_case, model)
-    return _mock_metric_result(metric, response, test_case)
+        return _live_metric_result(metric, response, test_case, model, context)
+    return _mock_metric_result(metric, response, test_case, context)
