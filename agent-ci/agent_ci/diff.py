@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from agent_ci.agents.base import BaseAgent
 from agent_ci.agents.factory import load_agents
+from agent_ci.conversation import get_display_user_message, get_primary_user_message, get_test_type
 from agent_ci.dataset import TEST_CASES
 from agent_ci.evaluation.engine import EvaluationEngine
 from agent_ci.regression.config import load_regression_config
@@ -28,11 +29,14 @@ def run_agent_suite(agent: BaseAgent) -> list[dict]:
             agent_response.answer,
             tc,
             retrieved_context=agent_response.retrieved_context,
+            conversation_transcript=agent_response.conversation_transcript,
+            tool_calls=agent_response.tool_calls,
         )
         results.append({
             "id": tc["id"],
             "category": tc["category"],
-            "user_message": tc["user_message"],
+            "test_type": get_test_type(tc),
+            "user_message": get_display_user_message(tc),
             "response": agent_response.answer,
             "agent_response": agent_response.to_dict(),
             "evaluation": {
@@ -51,7 +55,8 @@ def _regression_row_to_report_row(regression, tc: dict, r_base: dict, r_cand: di
     row.update({
         "id": tc["id"],
         "category": tc["category"],
-        "user_message": tc["user_message"],
+        "test_type": get_test_type(tc),
+        "user_message": get_display_user_message(tc),
         # Backward-compatible keys (v1 = baseline, v2 = candidate)
         "v1_response": r_base["response"],
         "v1_score": regression.baseline_score,
@@ -63,6 +68,8 @@ def _regression_row_to_report_row(regression, tc: dict, r_base: dict, r_cand: di
         "candidate_score": regression.candidate_score,
         "baseline_agent_response": r_base["agent_response"],
         "candidate_agent_response": r_cand["agent_response"],
+        "baseline_metrics": r_base.get("metrics", {}),
+        "candidate_metrics": r_cand.get("metrics", {}),
         "delta": regression.delta,
         "verdict": regression.verdict,
     })
@@ -89,7 +96,7 @@ def build_diff_report(
         r_cand = candidate_by_id[tc["id"]]
         regression = detect_regression(
             test_id=tc["id"],
-            question=tc["user_message"],
+            question=get_display_user_message(tc),
             baseline_result=r_base,
             candidate_result=r_cand,
             config=regression_config,

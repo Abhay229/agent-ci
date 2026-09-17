@@ -7,7 +7,8 @@
     "completeness": 0.06,
     "safety": 0.07,
     "hallucination": 0.06,
-    "tone": 0.06
+    "tone": 0.06,
+    "tool_usage": 0.0
   },
   "pass_threshold": 0.7
 }

@@ -48,7 +48,7 @@ class TestMockAgents(unittest.TestCase):
         self.assertEqual(response.model, "mock")
         data = response.to_dict()
         for key in ("answer", "model", "provider", "latency_ms", "token_usage",
-                    "retrieved_context", "tool_calls", "metadata"):
+                    "retrieved_context", "tool_calls", "conversation_transcript", "metadata"):
             self.assertIn(key, data)
 
     def test_baseline_and_candidate_differ(self):

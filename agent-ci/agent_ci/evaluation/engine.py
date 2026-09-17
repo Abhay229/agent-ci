@@ -16,6 +16,7 @@ from agent_ci.evaluation.metrics import (
     SafetyEvaluator,
     ToneEvaluator,
 )
+from agent_ci.evaluation.tool_usage import ToolUsageEvaluator
 from agent_ci.evaluation.types import EvaluationResult
 
 DEFAULT_EVALUATORS: list[BaseEvaluator] = [
@@ -27,6 +28,7 @@ DEFAULT_EVALUATORS: list[BaseEvaluator] = [
     SafetyEvaluator(),
     HallucinationEvaluator(),
     ToneEvaluator(),
+    ToolUsageEvaluator(),
 ]
 
 _engine_cache: EvaluationEngine | None = None

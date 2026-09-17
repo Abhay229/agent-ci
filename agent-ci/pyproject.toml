@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agent-ci"
+version = "0.1.0"
+description = "Regression testing and quality gating for LLM agents"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.0.0",
+    "chromadb>=0.4.0",
+    "streamlit>=1.28.0",
+]
+
+[project.scripts]
+agent-ci = "agent_ci.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["agent_ci*"]
