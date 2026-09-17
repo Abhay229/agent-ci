@@ -9,7 +9,13 @@ from agent_ci.evaluation.types import EvaluationResult
 class HardRuleEvaluator(BaseEvaluator):
     metric = "hard_rules"
 
-    def evaluate(self, response: str, test_case: dict) -> EvaluationResult:
+    def evaluate(
+        self,
+        response: str,
+        test_case: dict,
+        context: dict | None = None,
+    ) -> EvaluationResult:
+        _ = context
         text = response.lower()
         missing = [p for p in test_case.get("must_include", []) if p.lower() not in text]
         violated = [p for p in test_case.get("must_not_include", []) if p.lower() in text]

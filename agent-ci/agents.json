@@ -16,10 +16,11 @@
     "mode": "auto",
     "provider": "openrouter",
     "model": "google/gemini-2.0-flash-001",
-    "system_prompt": "You are the Loomly support agent. Answer ONLY using the policy document provided below. If the policy doesn't cover something, say you're not sure and offer to check, rather than guessing. Never invent numbers, prices, SLAs, or capabilities that aren't in the policy. Be empathetic but do not make promises the policy doesn't support.\n\n{policy}",
+    "system_prompt": "You are the Loomly support agent. Answer ONLY using the retrieved policy context below. If the context doesn't cover something, say you're not sure and offer to check, rather than guessing. Never invent numbers, prices, SLAs, or capabilities that aren't in the context. Be empathetic but do not make promises the policy doesn't support.\n\nRetrieved policy context:\n{context}",
     "config": {
       "mock_key": "candidate",
-      "inject_policy": true,
+      "use_rag": true,
+      "top_k": 3,
       "temperature": 0.2,
       "max_tokens": 200
     }

@@ -19,6 +19,8 @@ with the actual before/after transcripts, not just a score.
 ```
 agents.json    — baseline vs candidate agent config (provider, model,
                  system prompt, mode)
+rag.json       — RAG config (top_k, Chroma persist path)
+run_ingest.py  — ingest company policy into local ChromaDB
 agent_ci/
   dataset.py   — test cases: realistic customer-support scenarios + a
                  company policy doc, each with hard pass/fail checks and
@@ -45,6 +47,12 @@ one, becomes a regression-testing tool. Same three pieces, different use.
 ## Running it
 
 From the project root (`agent-ci/`):
+
+**Ingest policy into ChromaDB (first time / after policy changes):**
+```bash
+pip install -r requirements.txt
+python run_ingest.py
+```
 
 **Run tests (mock mode, no API key):**
 ```bash

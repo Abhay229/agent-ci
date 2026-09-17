@@ -34,7 +34,11 @@ def score_response(
     response: str,
     test_case: dict,
     weights: tuple[float, float] | None = None,
+    retrieved_context: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Evaluate a response and return per-test metrics plus final score."""
     _ = weights  # legacy tuple ignored; weights come from metric_weights.json
-    return get_engine().evaluate(response, test_case)
+    evaluation_context = None
+    if retrieved_context:
+        evaluation_context = {"retrieved_context": retrieved_context}
+    return get_engine().evaluate(response, test_case, evaluation_context)

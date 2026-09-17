@@ -15,7 +15,7 @@ class AgentResponse:
     provider: str | None = None
     latency_ms: float | None = None
     token_usage: dict[str, int] | None = None
-    retrieved_context: list[str] | None = None
+    retrieved_context: list[dict[str, Any]] | None = None
     tool_calls: list[dict[str, Any]] | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
