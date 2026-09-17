@@ -41,6 +41,8 @@ embeddings/
 
 # Generated evaluation artifacts
 diff_report.json
+diff_report_*.json
+history/
 reports/
 results/
 outputs/

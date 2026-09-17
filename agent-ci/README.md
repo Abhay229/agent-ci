@@ -34,8 +34,12 @@ agent_ci/
   regression_config.json — overall/metric regression thresholds
   diff.py      — runs baseline vs candidate and classifies every test as
                  REGRESSION / IMPROVEMENT / UNCHANGED
+  gate.py      — quality gate pass/fail decision
+  cli.py       — `agent-ci evaluate`, `check`, and `history` commands
+  history/     — JSONL evaluation history store and trend comparison
 run_demo.py    — runs the whole thing end to end, prints the report,
                  saves diff_report.json
+.github/workflows/agent-ci.yml — CI/CD quality gate (mock mode by default)
 ```
 
 This is the same three-piece environment structure — **dataset, rollout,
@@ -49,10 +53,10 @@ one, becomes a regression-testing tool. Same three pieces, different use.
 
 From the project root (`agent-ci/`):
 
-**Ingest policy into ChromaDB (first time / after policy changes):**
+**Install (includes the `agent-ci` CLI):**
 ```bash
-pip install -r requirements.txt
-python run_ingest.py
+pip install -e .
+python run_ingest.py   # first time / after policy changes
 ```
 
 **Run tests (mock mode, no API key):**
@@ -60,7 +64,23 @@ python run_ingest.py
 python -m unittest discover -s tests -v
 ```
 
-**Mock mode (default, no setup):**
+**Evaluate baseline vs candidate (mock mode, no API key):**
+```bash
+agent-ci evaluate
+```
+Runs the full benchmark, prints a human-readable summary, and writes
+`diff_report.json`. Always exits 0.
+
+**CI quality gate (mock mode, no API key):**
+```bash
+agent-ci check
+```
+Same evaluation plus a pass/fail gate. Exits **0** when there are no
+regressions, **1** when regressions are detected. The bundled demo
+dataset includes 1 intentional regression (`audit_logs_enterprise`), so
+`agent-ci check` fails until the candidate agent is fixed.
+
+**Mock mode demo script:**
 ```bash
 python run_demo.py
 ```
@@ -72,9 +92,57 @@ one (v2), so the full pipeline is inspectable without spending API credits.
 ```bash
 export AGENT_CI_LIVE=1
 export OPENROUTER_API_KEY=sk-or-...
-python run_demo.py
+agent-ci check
 ```
 Same code path, real rollouts and a real LLM-judge call per test case.
+
+## Evaluation history
+
+Each `evaluate` or `check` run is appended to `history/evaluations.jsonl`
+(JSON Lines — one record per line, easy to inspect and append).
+
+Each record stores timestamp, agent versions, model, provider, overall and
+per-metric scores, improvement/regression counts, failed tests, gate status,
+and a snapshot of configuration metadata.
+
+**List stored runs:**
+```bash
+agent-ci history list
+```
+
+**Compare metrics over time (v1 → v2 → v3 → …):**
+```bash
+agent-ci history compare
+```
+
+**Show one record:**
+```bash
+agent-ci history show 1
+```
+
+Skip history with `--no-history`. Use `--history-path` for a custom store.
+
+## CI/CD (GitHub Actions)
+
+The workflow at `.github/workflows/agent-ci.yml` runs on every push and PR:
+
+1. Installs dependencies (`pip install -e .`)
+2. Runs the unit test suite (mock mode, `AGENT_CI_MOCK_RAG=1`)
+3. Runs `agent-ci check` — **fails the workflow** when regressions are detected
+
+No API key is required for the default workflow.
+
+### Enabling live LLM evaluation in CI
+
+To run real model rollouts in GitHub Actions, add these repository secrets:
+
+| Secret | Value |
+|--------|-------|
+| `OPENROUTER_API_KEY` | Your OpenRouter API key |
+
+Then uncomment the `live-gate` job in `.github/workflows/agent-ci.yml` and
+set `AGENT_CI_LIVE=1` in that job's environment. Live evaluation runs real
+LLM calls and incurs API costs — use it on protected branches only.
 
 ## Sample output
 

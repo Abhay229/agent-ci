@@ -1,0 +1,62 @@
+name: Agent CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  test-and-gate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: agent-ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: agent-ci/pyproject.toml
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+        env:
+          AGENT_CI_MOCK_RAG: "1"
+
+      - name: Run Agent CI quality gate
+        run: agent-ci check
+        env:
+          AGENT_CI_MOCK_RAG: "1"
+
+  # Optional live evaluation — enable by setting repository secrets:
+  #   AGENT_CI_LIVE=1
+  #   OPENROUTER_API_KEY=<your key>
+  # Uncomment the job below and add the secrets to run real LLM rollouts in CI.
+  #
+  # live-gate:
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   defaults:
+  #     run:
+  #       working-directory: agent-ci
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-python@v5
+  #       with:
+  #         python-version: "3.12"
+  #     - run: pip install -e .
+  #     - run: agent-ci check
+  #       env:
+  #         AGENT_CI_LIVE: "1"
+  #         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
