@@ -3,3 +3,6 @@ openai>=1.0.0
 
 # RAG vector store (local embeddings, no API key required)
 chromadb>=0.4.0
+
+# Dashboard
+streamlit>=1.28.0

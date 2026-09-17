@@ -76,6 +76,7 @@ class TestCLI(unittest.TestCase):
                 "output": str(output),
                 "no_history": True,
                 "history_path": None,
+                "root_cause": False,
             })()
             code = cmd_evaluate(args)
             self.assertEqual(code, 0)
@@ -93,6 +94,7 @@ class TestCLI(unittest.TestCase):
                 "max_regressions": 0,
                 "no_history": True,
                 "history_path": None,
+                "root_cause": False,
             })()
             code = cmd_check(args)
             self.assertEqual(code, 1)
@@ -110,6 +112,7 @@ class TestCLI(unittest.TestCase):
                 "max_regressions": 1,
                 "no_history": True,
                 "history_path": None,
+                "root_cause": False,
             })()
             code = cmd_check(args)
             self.assertEqual(code, 0)

@@ -37,6 +37,7 @@ agent_ci/
   gate.py      — quality gate pass/fail decision
   cli.py       — `agent-ci evaluate`, `check`, and `history` commands
   history/     — JSONL evaluation history store and trend comparison
+dashboard/     — Streamlit dashboard (reads reports + history)
 run_demo.py    — runs the whole thing end to end, prints the report,
                  saves diff_report.json
 .github/workflows/agent-ci.yml — CI/CD quality gate (mock mode by default)
@@ -121,6 +122,47 @@ agent-ci history show 1
 ```
 
 Skip history with `--no-history`. Use `--history-path` for a custom store.
+
+**Optional AI root-cause analysis (mock or live):**
+```bash
+agent-ci check --root-cause
+# or: export AGENT_CI_ROOT_CAUSE=1
+```
+When regressions are detected, optionally sends test context to an LLM (or a
+deterministic mock in default mode) for structured root-cause suggestions.
+Results are labeled as **AI-generated and not guaranteed to be correct**.
+Analysis failures never break the main evaluation.
+
+**Optional AI test generation (mock or live):**
+```bash
+agent-ci check --generate-tests
+# or: export AGENT_CI_GENERATE_TESTS=1
+```
+When regressions occur, generates related test cases for human review. Stored
+separately in `generated_tests/pending.jsonl` — **not** added to the trusted
+benchmark automatically. Every generated test is marked
+**AI-generated — requires human review**.
+
+Review workflow:
+```bash
+agent-ci generated list
+agent-ci generated show <generation-id>
+agent-ci generated approve <generation-id>   # after human review
+agent-ci generated reject <generation-id>
+```
+Approved tests must be manually copied into `dataset.py` to join the official suite.
+
+## Dashboard
+
+Launch the Streamlit dashboard (reads `diff_report.json` and history — does not re-run evaluation):
+
+```bash
+pip install -e .
+agent-ci check   # generate diff_report.json first
+streamlit run dashboard/app.py
+```
+
+Sections: Overview, Version Comparison, Metrics, Regressions, Test Cases, History.
 
 ## CI/CD (GitHub Actions)
 
